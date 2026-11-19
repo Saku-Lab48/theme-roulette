@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>意見交換テーマ抽選ルーレット</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f9f3; --ink:#173b2a; --sub:#4d6b5b; --green:#1f8f55; --green-d:#13683c;
+  --line:#cfe5d6; --card:#ffffff; --leader:#fff6d6;
+}
+*{box-sizing:border-box}
+html{font-size:min(1.6vh,0.95vw)}
+body{margin:0;height:100vh;overflow:hidden;background:var(--bg);color:var(--ink);
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Meiryo",sans-serif;
+  display:flex;flex-direction:column}
+button{font-family:inherit;cursor:pointer}
+
+/* header */
+header{display:flex;align-items:center;gap:1.4rem;padding:1rem 2rem;background:var(--green);color:#fff;
+  box-shadow:0 .3rem 1rem rgba(0,60,30,.18);flex:0 0 auto}
+header h1{font-size:2.3rem;margin:0;font-weight:800;letter-spacing:.05em;white-space:nowrap}
+#status{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:1.9rem;font-weight:800;text-align:center;white-space:nowrap}
+#status .num{display:inline-block;background:#fff;color:var(--green-d);border-radius:1rem;padding:0 .8rem;margin:0 .3rem}
+.tools{display:flex;gap:.6rem}
+.tbtn{background:rgba(255,255,255,.16);color:#fff;border:2px solid rgba(255,255,255,.45);border-radius:2rem;
+  padding:.45rem 1rem;font-size:1.15rem;font-weight:700;white-space:nowrap}
+.tbtn:hover{background:rgba(255,255,255,.28)}
+.tbtn.on{background:#fff;color:var(--green-d);border-color:#fff}
+.tbtn.warn{background:#ffdf6b;color:#5a4200;border-color:#ffdf6b}
+
+/* main */
+main{flex:1;display:grid;grid-template-columns:42% 58%;min-height:0}
+#left{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 1rem 1.5rem 2rem;min-height:0}
+#wheelWrap{position:relative;flex:1;width:100%;min-height:0;display:flex;align-items:center;justify-content:center}
+#wheel{display:block;filter:drop-shadow(0 1.2rem 1.6rem rgba(10,70,40,.22))}
+#pointer{position:absolute;left:50%;top:0;transform:translateX(-50%);width:0;height:0;
+  border-left:2.2rem solid transparent;border-right:2.2rem solid transparent;border-top:4.4rem solid #e2412f;
+  filter:drop-shadow(0 .3rem .3rem rgba(0,0,0,.3));transform-origin:50% 0;z-index:2}
+#pointer.wig{animation:wig .12s ease-out}
+@keyframes wig{0%{transform:translateX(-50%) rotate(-14deg)}100%{transform:translateX(-50%) rotate(0)}}
+#spinBtn{margin-top:1.2rem;font-size:2.4rem;font-weight:800;color:#fff;border:none;border-radius:4rem;
+  padding:1rem 3.6rem;background:linear-gradient(180deg,#ff8a3d,#e8542a);
+  box-shadow:0 .5rem 0 #b33a17,0 1rem 1.6rem rgba(0,0,0,.18);transition:transform .08s}
+#spinBtn:active{transform:translateY(.4rem);box-shadow:0 .1rem 0 #b33a17}
+#spinBtn:disabled{filter:grayscale(.7) opacity(.6);cursor:default}
+#spinBtn .key{font-size:1.2rem;opacity:.85;margin-left:.6rem}
+#remain{margin-top:.8rem;font-size:1.3rem;color:var(--sub);font-weight:700}
+
+/* seat map */
+#right{padding:1.5rem 2rem 1.5rem 1rem;display:flex;flex-direction:column;gap:1rem;min-height:0}
+.bar{border-radius:.8rem;text-align:center;font-weight:800;font-size:1.5rem;padding:.55rem;flex:0 0 auto}
+.front{background:#dfe6e2;border:3px solid #6f8579;color:#2c4136;display:flex;gap:1rem;align-items:center}
+.front .mini{font-size:1.1rem;background:#fff;border:2px solid #6f8579;border-radius:.5rem;padding:.2rem .7rem;font-weight:700}
+.front .label{flex:1}
+.rows{flex:1;display:flex;flex-direction:column;gap:1.1rem;min-height:0}
+.row{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;min-height:0}
+.back{display:flex;gap:1rem}
+.back div{border-radius:.8rem;padding:.5rem;font-weight:800;font-size:1.3rem;text-align:center}
+.back .entry{background:#dfe6e2;border:3px solid #6f8579;width:30%}
+.back .rear{flex:1;color:var(--sub)}
+
+.g{position:relative;background:var(--card);border:.3rem solid var(--line);border-radius:1.2rem;display:flex;flex-direction:column;
+  overflow:hidden;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s}
+.g:hover{transform:translateY(-.2rem)}
+.g .gh{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:#e7f3ea}
+.g .gno{font-size:2rem;font-weight:800;color:var(--green-d);white-space:nowrap}
+.g .slot{flex:1;min-height:3.6rem;border-radius:.7rem;border:2px dashed #a9cdb5;display:flex;align-items:center;justify-content:center;
+  font-size:1.9rem;font-weight:800;color:#a9cdb5;text-align:center;line-height:1.15;padding:.2rem .4rem}
+.g .names{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:repeat(3,1fr);grid-auto-flow:column;gap:.25rem;padding:.5rem .6rem .6rem;min-height:0}
+.g .names div{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;
+  border-radius:.45rem;background:#f6faf7;text-align:center;line-height:1.2;overflow:hidden;padding:0 .15rem}
+.g .names div.ld{background:var(--leader)}
+.g .names div small{font-size:.75rem;letter-spacing:-.03em;color:var(--sub)}
+.g.current{border-color:#ff8a3d;box-shadow:0 0 0 .4rem rgba(255,138,61,.35),0 .8rem 1.6rem rgba(255,110,40,.25);transform:scale(1.03)}
+.g.current .gh{background:#ffe9d9}
+.g.current .slot{border-color:#ff8a3d;color:#ff8a3d;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.35}}
+.g.hop{border-color:#ffb43d;box-shadow:0 0 0 .5rem rgba(255,180,61,.55);transform:scale(1.05)}
+.g.done{cursor:default}
+.g.done .slot{border:none;color:#fff;font-size:1.3rem;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+.g.done .slot b{display:block;font-size:1.05rem;opacity:.9}
+@keyframes pop{0%{transform:scale(.2) rotate(-8deg)}100%{transform:scale(1)}}
+body.nonames .g .names{display:none}
+body.nonames .g .gh{flex:1;flex-direction:column;justify-content:center}
+body.nonames .g .slot{width:100%;font-size:2.6rem}
+body.nonames .g .gno{font-size:3rem}
+body.nonames .g.done .slot{font-size:2.3rem}
+body.nonames .g.done .slot b{font-size:1.6rem}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:rgba(8,35,22,.72);display:flex;align-items:center;justify-content:center;z-index:20;backdrop-filter:blur(3px)}
+.ov.hidden{display:none}
+.reveal{width:min(80vw,140rem);text-align:center;color:#fff}
+#ovLead{font-size:3.6rem;font-weight:800;margin-bottom:2rem;animation:fadein .5s}
+#ovLead .gn{display:inline-block;background:#ff8a3d;border-radius:1.2rem;padding:0 1.4rem;margin-right:.6rem}
+@keyframes fadein{from{opacity:0;transform:translateY(1rem)}}
+.tcard{background:#fff;color:var(--ink);border-radius:2rem;overflow:hidden;text-align:left;
+  box-shadow:0 2rem 4rem rgba(0,0,0,.35);animation:zoom .7s cubic-bezier(.2,1.5,.4,1)}
+@keyframes zoom{0%{transform:scale(.3) rotate(-6deg);opacity:0}100%{transform:scale(1);opacity:1}}
+.tcard .top{display:flex;align-items:center;gap:2rem;padding:2rem 3rem;color:#fff}
+.tcard .no{font-size:2rem;font-weight:800;background:rgba(255,255,255,.25);border-radius:1rem;padding:.4rem 1.2rem;white-space:nowrap}
+.tcard .tt{font-size:4rem;font-weight:800;line-height:1.2}
+.tcard .body{padding:2rem 3rem 2.6rem}
+.tcard .q{font-size:2.6rem;font-weight:800;line-height:1.45;margin-bottom:1.6rem}
+.tcard .meta{display:grid;grid-template-columns:auto 1fr;gap:.8rem 1.2rem;font-size:1.8rem;line-height:1.5;color:#29483a}
+.tcard .meta span{font-weight:800;border-radius:.6rem;padding:.1rem .8rem;color:#fff;height:fit-content;white-space:nowrap}
+#ovOk{margin-top:2.2rem;font-size:2.2rem;font-weight:800;border:none;border-radius:3rem;padding:.9rem 4rem;color:var(--green-d);background:#fff;
+  box-shadow:0 .5rem 0 #9fc9ad}
+#ovOk.hide{visibility:hidden}
+
+/* summary */
+.sum{background:#fff;color:var(--ink);border-radius:2rem;padding:2.2rem 2.6rem;width:min(92vw,150rem);max-height:92vh;overflow:auto;
+  animation:zoom .5s cubic-bezier(.2,1.4,.4,1)}
+.sum h2{margin:0 0 1.4rem;font-size:3rem;text-align:center}
+.sum .list{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.sum .it{display:flex;gap:1rem;align-items:stretch;border-radius:1rem;background:#f4f9f5;overflow:hidden}
+.sum .it .gn{color:#fff;font-size:2.2rem;font-weight:800;display:flex;align-items:center;justify-content:center;min-width:6.5rem}
+.sum .it .tx{padding:.7rem .4rem .8rem 0}
+.sum .it .tx b{font-size:1.75rem;display:block;line-height:1.3}
+.sum .it .tx div{font-size:1.3rem;color:#36574a;line-height:1.45;margin-top:.2rem}
+.sum .foot{text-align:center;margin-top:1.4rem}
+.sum .foot button{font-size:1.6rem;font-weight:800;border:none;border-radius:2rem;padding:.6rem 2.6rem;background:var(--green);color:#fff}
+
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+</style>
+</head>
+<body class="nonames">
+<header>
+  <h1>🎡 意見交換テーマ抽選</h1>
+  <div id="status"></div>
+  <div class="tools">
+    <button class="tbtn" id="modeBtn" title="次に回す班もルーレットで決めます">班もランダム</button>
+    <button class="tbtn on" id="soundBtn">音あり</button>
+    <button class="tbtn" id="listBtn">一覧</button>
+    <button class="tbtn" id="undoBtn">1つ戻す</button>
+    <button class="tbtn" id="resetBtn">リセット</button>
+    <button class="tbtn" id="fsBtn">全画面</button>
+  </div>
+</header>
+<main>
+  <section id="left">
+    <div id="wheelWrap"><div id="pointer"></div><canvas id="wheel"></canvas></div>
+    <button id="spinBtn">ルーレットを回す<span class="key">［スペース］</span></button>
+    <div id="remain"></div>
+  </section>
+  <section id="right">
+    <div class="bar front"><div class="mini">司会・授業者</div><div class="mini">指導者</div><div class="label">前方（スクリーン・ホワイトボード）</div></div>
+    <div class="rows">
+      <div class="row" id="row1"></div>
+      <div class="row" id="row2"></div>
+    </div>
+    <div class="back"><div class="entry">入口（受付）</div><div class="rear">＜ 後方 ＞</div></div>
+  </section>
+</main>
+
+<div class="ov hidden" id="ov">
+  <div class="reveal">
+    <div id="ovLead"></div>
+    <div id="ovCard"></div>
+    <button id="ovOk" class="hide">決定！</button>
+  </div>
+</div>
+<div class="ov hidden" id="sumOv"><div class="sum" id="sumBox"></div></div>
+<canvas id="confetti"></canvas>
+
+<script>
+const THEMES=[
+ {no:1,short:"AIと子どもの役割分担",title:"AIに任せたこと、子どもが決めたこと",color:"#1f9a58",
+  q:"この単元で、AIは何を引き受け、子どもは何を判断していたか。その分け方は妥当だったか。",
+  scene:"AIが担ったのは、すてきカードの分類とキーワード化。担当や言葉を選び、歌詞を決めたのは子ども。",
+  view:"低学年で、AIに任せてよいことと任せてはいけないことの線はどこにあるか。"},
+ {no:2,short:"体験の言葉とAIの言葉",title:"体験から生まれた言葉と、AIが整理した言葉",color:"#1694a3",
+  q:"AIが抜き出したキーワードは、子どもにとって「自分の言葉」になっていたか。",
+  scene:"「せーの」で金のすてきカードを見せ合う場面や、選んだ理由を語る場面。",
+  view:"AIの言葉を、子どもの体験に結び付け直す手立ては何だったか（記号接地の考え方から）。"},
+ {no:3,short:"AI年長さんと本物の交流",title:"AI年長さんと、本物の交流",color:"#3a72d8",
+  q:"AI年長さんは、相手意識を育てる助けになったか。本物の年長さんのイメージを置き換えてしまう危険はないか。",
+  scene:"これまでに2回交流した同じ園の年長さんを想定し、AI年長さんに話しかけている場面。",
+  view:"実際に交流した経験がない場合でも、同じ使い方は成り立つか。"},
+ {no:4,short:"先生が間に入る意味",title:"先生が間に入る使い方の意味",color:"#7a58d6",
+  q:"子どもが自分でAIを操作しなくても、情報活用能力は育つのか。",
+  scene:"先生がAIの分類を子どもに示し、問い返して考え直させる場面。",
+  view:"育つとすれば、三つの要素（活用・適切な取扱い・特性の理解）のどれが育っていたか。"},
+ {no:5,short:"低学年から高学年へ",title:"低学年から高学年へのつながり",color:"#d6497f",
+  q:"「AIの答えを正解にしない」構えを、低学年でどこまで、どんな形で育てるか。",
+  scene:"2年生はAIの整理を手がかりに自分で選び直していた。4〜6年ではAIの案を比べて吟味し、特性と限界を学んでいる。",
+  view:"幼児期から6年まで、各学年で何ができればよいか。"},
+ {no:6,short:"AIで生まれた時間",title:"AIで生まれた時間をどう使うか",color:"#e57a2c",
+  q:"分類作業をAIに任せて生まれた時間は、何に使われていたか。他の単元ならどう使えるか。",
+  scene:"「どれを担当するか」「どの言葉で伝えるか」を子どもが選ぶ時間が確保されていた。",
+  view:"先生の作業を減らすことと、子どもの学びを深めることを両立させる条件は何か。"},
+ {no:7,short:"安全と配慮",title:"低学年でAIを使うときの安全と配慮",color:"#c99a0e",
+  q:"子どもの書いた言葉や園児の様子をAIに入れるとき、どんな配慮が必要か。保護者や園にはどう説明するか。",
+  scene:"すてきカードの内容をAIで分類している。保育園の先生から聞いた園児の様子をもとに、AI年長さんを作っている。",
+  view:"個人情報を入れない工夫。年齢による利用制限を踏まえた使い方。低学年なりの情報モラルの入口として、子どもに何を伝えるか。"}
+];
+const GROUPS=[1,2,3,4,5,6,7].map(no=>({no}));
+const KEY="theme-roulette-v1";
+let state={assign:{},history:[]};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&s.assign)state=s;}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+let opts={random:false,names:true,sound:true};
+let current=null, spinning=false, rot=0, overlayOpen=false;
+const $=id=>document.getElementById(id);
+const themeBy=n=>THEMES.find(t=>t.no===n);
+const remaining=()=>THEMES.filter(t=>!Object.values(state.assign).includes(t.no));
+const freeGroups=()=>GROUPS.filter(g=>!state.assign[g.no]);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- sound ---------- */
+let actx=null;
+function audio(){ if(!opts.sound) return null; try{ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); }catch(e){actx=null} return actx; }
+function beep(freq,dur,type="square",vol=.12,when=0){
+  const a=audio(); if(!a) return;
+  const t=a.currentTime+when, o=a.createOscillator(), g=a.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+dur+.02);
+}
+const tick=()=>beep(1500,.035,"square",.07);
+const hop=()=>beep(820,.06,"triangle",.14);
+function fanfare(){
+  [[523,0],[659,.12],[784,.24],[1047,.4]].forEach(([f,w])=>beep(f,.35,"triangle",.18,w));
+  [523,659,784,1047].forEach(f=>beep(f,1.1,"triangle",.09,.62));
+}
+
+/* ---------- wheel ---------- */
+const cv=$("wheel"), cx=cv.getContext("2d");
+let S=600, dpr=1;
+function sizeWheel(){
+  const w=$("wheelWrap"); dpr=window.devicePixelRatio||1;
+  S=Math.max(200,Math.min(w.clientWidth,w.clientHeight)-10);
+  cv.style.width=S+"px";cv.style.height=S+"px";cv.width=S*dpr;cv.height=S*dpr;
+  $("pointer").style.top=(w.clientHeight-S)/2-8+"px";
+  draw();
+}
+function draw(){
+  const rem=remaining(), W=S*dpr, c=W/2, R=c-14*dpr;
+  cx.clearRect(0,0,W,W);
+  // rim
+  cx.beginPath();cx.arc(c,c,R+10*dpr,0,Math.PI*2);cx.fillStyle="#173b2a";cx.fill();
+  if(rem.length===0){
+    cx.beginPath();cx.arc(c,c,R,0,Math.PI*2);cx.fillStyle="#e7f3ea";cx.fill();
+    cx.fillStyle="#1f8f55";cx.font=`800 ${R*.16}px "M PLUS Rounded 1c",sans-serif`;
+    cx.textAlign="center";cx.textBaseline="middle";cx.fillText("全班決定！",c,c);return;
+  }
+  const n=rem.length, w=Math.PI*2/n;
+  rem.forEach((t,i)=>{
+    const a0=rot+i*w;
+    cx.beginPath();cx.moveTo(c,c);cx.arc(c,c,R,a0,a0+w);cx.closePath();
+    cx.fillStyle=t.color;cx.fill();
+    cx.lineWidth=4*dpr;cx.strokeStyle="#fff";cx.stroke();
+    const mid=a0+w/2, flip=Math.cos(mid)<0, sg=flip?-1:1;
+    cx.save();cx.translate(c,c);cx.rotate(flip?mid+Math.PI:mid);
+    cx.fillStyle="#fff";cx.textBaseline="middle";cx.textAlign=flip?"left":"right";
+    cx.font=`800 ${R*.15}px "M PLUS Rounded 1c",sans-serif`;
+    cx.fillText(String(t.no),sg*R*.9,0);
+    let fs=R*.075; cx.font=`800 ${fs}px "M PLUS Rounded 1c",sans-serif`;
+    const maxW=R*.52; const mw=cx.measureText(t.short).width;
+    if(mw>maxW){fs=fs*maxW/mw;cx.font=`800 ${fs}px "M PLUS Rounded 1c",sans-serif`;}
+    cx.fillText(t.short,sg*R*.73,0);
+    cx.restore();
+  });
+  // lights
+  const L=28, on=Math.floor(performance.now()/(spinning?90:450))%2;
+  for(let i=0;i<L;i++){const a=i/L*Math.PI*2;
+    cx.beginPath();cx.arc(c+Math.cos(a)*(R+5*dpr),c+Math.sin(a)*(R+5*dpr),4.2*dpr,0,Math.PI*2);
+    cx.fillStyle=(i%2===on)?"#ffe46b":"#6b8f7b";cx.fill();}
+  // hub
+  cx.beginPath();cx.arc(c,c,R*.17,0,Math.PI*2);cx.fillStyle="#fff";cx.fill();
+  cx.lineWidth=6*dpr;cx.strokeStyle="#173b2a";cx.stroke();
+  cx.fillStyle="#e2412f";cx.font=`800 ${R*.09}px "M PLUS Rounded 1c",sans-serif`;
+  cx.textAlign="center";cx.textBaseline="middle";cx.fillText(current?current+"班":"？",c,c+R*.005);
+}
+function segAtPointer(n){ const w=Math.PI*2/n; let a=(Math.PI*1.5-rot)%(Math.PI*2); if(a<0)a+=Math.PI*2; return Math.floor(a/w)%n; }
+setInterval(()=>{ if(!spinning) draw(); },450);
+
+/* ---------- map ---------- */
+function renderMap(){
+  const mk=g=>{
+    const t=state.assign[g.no]?themeBy(state.assign[g.no]):null;
+    const el=document.createElement("div");
+    el.className="g"+(t?" done":"")+(current===g.no&&!t?" current":"");
+    el.dataset.g=g.no;
+    if(t) el.style.borderColor=t.color;
+    el.innerHTML=`<div class="gh"><div class="gno">${g.no}班</div>`+
+      (t?`<div class="slot" style="background:${t.color}"><span>${t.short}</span></div>`
+        :`<div class="slot">？</div>`)+`</div>`;
+    el.onclick=()=>{ if(spinning||overlayOpen||state.assign[g.no]) return; current=g.no; render(); };
+    return el;
+  };
+  const r1=$("row1"),r2=$("row2"); r1.innerHTML="";r2.innerHTML="";
+  GROUPS.slice(0,4).forEach(g=>r1.appendChild(mk(g)));
+  GROUPS.slice(4).forEach(g=>r2.appendChild(mk(g)));
+}
+function render(){
+  const free=freeGroups();
+  if(current&&state.assign[current]) current=null;
+  if(!current&&!opts.random&&free.length) current=free[0].no;
+  if(!current&&free.length===1) current=free[0].no;
+  const st=$("status");
+  if(!free.length) st.innerHTML="🎉 全班のテーマが決まりました！";
+  else if(current) st.innerHTML=`いま回すのは<span class="num">${current}班</span>`;
+  else st.innerHTML="班もルーレットで決めます！";
+  $("spinBtn").disabled=!free.length||spinning;
+  $("spinBtn").firstChild.textContent=(!current&&opts.random)?"班とテーマを抽選！":"ルーレットを回す";
+  $("remain").textContent=free.length?`残り ${remaining().length} テーマ／${free.length} 班`:"「一覧」で全班のテーマを表示できます";
+  $("modeBtn").classList.toggle("on",opts.random);
+  renderMap(); draw();
+}
+
+/* ---------- spin ---------- */
+async function pickGroup(){
+  const free=freeGroups(); if(free.length===1){current=free[0].no;return;}
+  const target=free[Math.floor(Math.random()*free.length)].no;
+  const hops=14+Math.floor(Math.random()*free.length);
+  let idx=Math.floor(Math.random()*free.length);
+  // ensure finishing on target
+  const tIdx=free.findIndex(g=>g.no===target);
+  const total=hops-((hops+idx-tIdx)%free.length)+free.length;
+  for(let i=0;i<total;i++){
+    idx=(idx+1)%free.length;
+    document.querySelectorAll(".g").forEach(e=>e.classList.toggle("hop",+e.dataset.g===free[idx].no));
+    hop(); await sleep(70+Math.pow(i/total,3)*380);
+  }
+  document.querySelectorAll(".g.hop").forEach(e=>e.classList.remove("hop"));
+  current=free[idx].no; render(); await sleep(700);
+}
+async function spin(){
+  if(spinning||overlayOpen) return;
+  if(!freeGroups().length){showSummary();return;}
+  audio(); spinning=true; $("spinBtn").disabled=true;
+  if(!current) await pickGroup();
+  render(); spinning=true; $("spinBtn").disabled=true;
+  const rem=remaining(), n=rem.length, w=Math.PI*2/n;
+  const ti=Math.floor(Math.random()*n), f=.15+Math.random()*.7;
+  let desired=Math.PI*1.5-(ti+f)*w;
+  let delta=((desired-rot)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+  const start=rot, end=rot+(6+Math.floor(Math.random()*3))*Math.PI*2+delta;
+  const dur=5600+Math.random()*1200, t0=performance.now();
+  let last=segAtPointer(n);
+  await new Promise(res=>{
+    function frame(now){
+      const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,4);
+      rot=start+(end-start)*e; draw();
+      const s=segAtPointer(n);
+      if(s!==last){last=s;tick();const pt=$("pointer");pt.classList.remove("wig");void pt.offsetWidth;pt.classList.add("wig");}
+      if(p<1) requestAnimationFrame(frame); else res();
+    }
+    requestAnimationFrame(frame);
+  });
+  rot=((rot%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+  spinning=false; draw();
+  await sleep(450);
+  reveal(current, rem[ti]);
+}
+function reveal(gno,t){
+  overlayOpen=true; pending={g:gno,t:t.no};
+  $("ovLead").innerHTML=`<span class="gn">${gno}班</span>のテーマは…`;
+  $("ovCard").innerHTML=""; $("ovOk").classList.add("hide");
+  $("ov").classList.remove("hidden");
+  beep(220,.5,"sawtooth",.05);
+  setTimeout(()=>{
+    $("ovCard").innerHTML=`<div class="tcard"><div class="top" style="background:${t.color}"><div class="tt">${t.title}</div></div>
+      <div class="body"><div class="q">${t.q}</div><div class="meta">
+      <span style="background:${t.color}">見えた場面</span><div>${t.scene}</div>
+      <span style="background:${t.color}">深める視点</span><div>${t.view}</div></div></div></div>`;
+    $("ovOk").classList.remove("hide"); fanfare(); confetti(t.color);
+  },1100);
+}
+let pending=null;
+function confirmTheme(){
+  if(!pending) return;
+  state.assign[pending.g]=pending.t; state.history.push(pending.g); save();
+  pending=null; overlayOpen=false; $("ov").classList.add("hidden");
+  current=null; render();
+  if(!freeGroups().length){ setTimeout(()=>{fanfare();confetti();setTimeout(showSummary,1200);},400); }
+}
+$("ovOk").onclick=confirmTheme;
+
+/* ---------- summary ---------- */
+function showSummary(){
+  const items=GROUPS.map(g=>{const t=state.assign[g.no]?themeBy(state.assign[g.no]):null;
+    return `<div class="it"><div class="gn" style="background:${t?t.color:"#a9bfb2"}">${g.no}班</div><div class="tx">`+
+      (t?`<b>${t.title}</b><div>${t.q}</div>`:`<b>未定</b>`)+`</div></div>`;}).join("");
+  $("sumBox").innerHTML=`<h2>各班のテーマ</h2><div class="list">${items}</div><div class="foot"><button id="sumClose">閉じる</button></div>`;
+  $("sumOv").classList.remove("hidden"); overlayOpen=true;
+  $("sumClose").onclick=()=>{$("sumOv").classList.add("hidden");overlayOpen=false;};
+}
+
+/* ---------- confetti ---------- */
+const cc=$("confetti"), cctx=cc.getContext("2d"); let parts=[], running=false;
+function confetti(main){
+  cc.width=innerWidth;cc.height=innerHeight;
+  const cols=[main||"#1f9a58",...THEMES.map(t=>t.color),"#ffe46b"];
+  for(let i=0;i<220;i++){
+    const side=i%2; parts.push({x:side?cc.width*.05:cc.width*.95,y:cc.height*.75,
+      vx:(side?1:-1)*(4+Math.random()*10),vy:-(10+Math.random()*14),
+      r:Math.random()*Math.PI,vr:(Math.random()-.5)*.4,s:6+Math.random()*9,c:cols[i%cols.length],life:0});
+  }
+  if(!running){running=true;requestAnimationFrame(cstep);}
+}
+function cstep(){
+  cctx.clearRect(0,0,cc.width,cc.height);
+  parts.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life++;
+    cctx.save();cctx.translate(p.x,p.y);cctx.rotate(p.r);cctx.fillStyle=p.c;cctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cctx.restore();});
+  parts=parts.filter(p=>p.y<cc.height+40&&p.life<400);
+  if(parts.length) requestAnimationFrame(cstep); else {running=false;cctx.clearRect(0,0,cc.width,cc.height);}
+}
+
+/* ---------- controls ---------- */
+$("spinBtn").onclick=spin;
+$("modeBtn").onclick=()=>{ if(spinning) return; opts.random=!opts.random; if(opts.random) current=null; render(); };
+$("soundBtn").onclick=()=>{opts.sound=!opts.sound;$("soundBtn").classList.toggle("on",opts.sound);$("soundBtn").textContent=opts.sound?"音あり":"音なし";};
+$("listBtn").onclick=()=>{ if(!spinning&&!overlayOpen) showSummary(); };
+$("undoBtn").onclick=()=>{ if(spinning||overlayOpen) return; const g=state.history.pop(); if(g==null) return; delete state.assign[g]; save(); current=g; render(); };
+let resetArm=null;
+$("resetBtn").onclick=()=>{
+  if(spinning||overlayOpen) return;
+  const b=$("resetBtn");
+  if(!resetArm){ b.textContent="本当にリセット？"; b.classList.add("warn");
+    resetArm=setTimeout(()=>{resetArm=null;b.textContent="リセット";b.classList.remove("warn");},3000); return; }
+  clearTimeout(resetArm); resetArm=null; b.textContent="リセット"; b.classList.remove("warn");
+  state={assign:{},history:[]}; save(); current=null; rot=0; render();
+};
+$("fsBtn").onclick=()=>{ try{ if(!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{}); else document.exitFullscreen(); }catch(e){} };
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"||e.code==="Enter"){ e.preventDefault();
+    if(!$("sumOv").classList.contains("hidden")){ $("sumOv").classList.add("hidden"); overlayOpen=false; return; }
+    if(pending&&!$("ovOk").classList.contains("hide")) { confirmTheme(); return; }
+    if(!overlayOpen) spin();
+  }
+});
+window.addEventListener("resize",sizeWheel);
+render();
+(document.fonts?document.fonts.ready:Promise.resolve()).then(sizeWheel);
+sizeWheel();
+</script>
+</body>
+</html>
